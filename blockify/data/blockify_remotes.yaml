@@ -1,0 +1,7 @@
+se:
+    name: Swedish ads
+    url: http://localhost/web/swedish_blocklist
+
+de:
+    name: German ads
+    url: http://localhost/web/german_blocklist

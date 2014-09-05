@@ -21,6 +21,12 @@ Otherwise, the UI elements should be pretty obvious.
 You can, at all times, open your ~/.blockify_list in an editor of your choice to edit it in detail.  
 The "Open/Close Blocklist" element in the GUI is only meant for quick removals of items.
 
+
+### Loading remote blocklists
+On startup, blockify can add entries to the local blocklist by loading remote lists as indicated in the ~/.blockify_remotes.yaml file.  
+An example file is also included.  
+
+
 ### CLI Usage
 
 `blockify -h` will print out a help text with available options.

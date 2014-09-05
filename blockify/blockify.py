@@ -57,16 +57,22 @@ class Blocklist(list):
 
 
     def _load_remotes(self, remote_locations):
-        data = yaml.load(file(remote_locations, 'r'))
         remote_list = []
+        try:
+            data = yaml.load(file(remote_locations, 'r'))
+        except IOError:
+            log.debug("Couldn't find '{}' for remote blocklist loading".format(remote_locations))
+            return remote_list
 
         for _, remote in data.iteritems():
             name, url = remote['name'], remote['url']
-            # TODO: blocking calls (requests.get()) should be done in a separate thread (probably the whole function)
+            # TODO: blocking calls (requests.get()) should be done
+            # in a separate thread (probably the whole function)
             r = requests.get(url)
             if r.status_code == 200:
                 remote_content = set(r.text.split('\n')) # get rid of potential remote duplicates
-                filtered_content = [x for x in remote_content if x.strip() and x not in self] # skip blank lines and inefficiently avoid duplicates with local list
+                # skip blank lines and inefficiently avoid duplicates with local list
+                filtered_content = [x for x in remote_content if x.strip() and x not in self]
                 remote_list.extend(filtered_content)
                 if filtered_content:
                     log.info("Importing from remote list '{}': {}".format(name, filtered_content))
@@ -76,7 +82,6 @@ class Blocklist(list):
                 log.info("Couldn't load '{}' from {}".format(name, url))
 
         return remote_list
-
 
 
     def append(self, item):
