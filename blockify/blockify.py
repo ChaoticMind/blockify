@@ -24,6 +24,8 @@ import time
 import gtk
 import pygtk
 import wnck
+import yaml
+import requests
 
 
 try:
@@ -39,12 +41,42 @@ log = logging.getLogger("main")
 class Blocklist(list):
     "Inheriting from list type is a bad idea. Let's see what happens."
 
-    def __init__(self):
+    def __init__(self, load_remotes=False):
         super(Blocklist, self).__init__()
         self.home = os.path.expanduser("~")
         self.location = os.path.join(self.home, ".blockify_list")
+        remote_locations = os.path.join(self.home, ".blockify_remotes.yaml")
         self.extend(self.load_file())
         self.timestamp = self.get_timestamp()
+
+        if load_remotes:
+            remote_list = self._load_remotes(remote_locations)
+            if remote_list:
+                self.extend(remote_list)
+                self.save_file()
+
+
+    def _load_remotes(self, remote_locations):
+        data = yaml.load(file(remote_locations, 'r'))
+        remote_list = []
+
+        for _, remote in data.iteritems():
+            name, url = remote['name'], remote['url']
+            # TODO: blocking calls (requests.get()) should be done in a separate thread (probably the whole function)
+            r = requests.get(url)
+            if r.status_code == 200:
+                remote_content = set(r.text.split('\n')) # get rid of potential remote duplicates
+                filtered_content = [x for x in remote_content if x.strip() and x not in self] # skip blank lines and inefficiently avoid duplicates with local list
+                remote_list.extend(filtered_content)
+                if filtered_content:
+                    log.info("Importing from remote list '{}': {}".format(name, filtered_content))
+                else:
+                    log.info("No new content from remote list '{}'".format(name))
+            else:
+                log.info("Couldn't load '{}' from {}".format(name, url))
+
+        return remote_list
+
 
 
     def append(self, item):
@@ -323,7 +355,7 @@ def main():
     args = docopt(__doc__, version="1.0")
     init_logger(args["--log"], args["-v"], args["--quiet"])
 
-    blocklist = Blocklist()
+    blocklist = Blocklist(load_remotes=True)
     blockify = Blockify(blocklist)
 
     blockify.bind_signals()

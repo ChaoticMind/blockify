@@ -312,7 +312,7 @@ class BlockifyUI(gtk.Window):
         # Try to find a Spotify process in the current DBus session.
 
         self.connect_dbus()
-        blocklist = blockify.Blocklist()
+        blocklist = blockify.Blocklist(load_remotes=True)
         self.b = blockify.Blockify(blocklist)
         self.bind_signals()
         self.b.toggle_mute()
